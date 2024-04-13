@@ -151,7 +151,7 @@ const ProductCard = ({
             <Button
               style={{
                 display:
-                  isInCart && pageType == "productList" ? "block" : "none",
+                  isInCart && pageType === "productList" ? "block" : "none",
               }}
               variant="outline"
               onClick={handleRemoveFromCartButtonClick}
