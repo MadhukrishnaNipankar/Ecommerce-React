@@ -1,9 +1,18 @@
-import React from "react";
-import { Box, Flex } from "@chakra-ui/react";
+import { React, useEffect, useState } from "react";
+import { Box, Flex, Text } from "@chakra-ui/react";
 
 import ProductCard from "../Components/ProductCard";
 
-const ProductlListPage = ({ updateCartItemCount }) => {
+const MyCartPage = ({ cartTabSelected }) => {
+  const [currentCart, setCurrentCart] = useState([]);
+
+  useEffect(() => {
+    if (cartTabSelected) {
+      const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
+      setCurrentCart(storedCart);
+    }
+  }, [cartTabSelected]);
+
   const products = [
     {
       id: 1,
@@ -43,30 +52,42 @@ const ProductlListPage = ({ updateCartItemCount }) => {
       salesCount: 4000,
       sellerName: "Ramesh MegaStore",
     },
+
     // Add more products here with the same structure
   ];
+
   return (
     <Box h="99vh" p={4}>
       <Flex color="white" flexWrap="wrap">
-        {products.map((product, index) => (
-          <ProductCard
-            key={index}
-            id={product.id}
-            imageUrl={product.imageUrl}
-            title={product.title}
-            description={product.description}
-            price={product.price}
-            rating={product.rating}
-            positiveFeedbackCount={product.positiveFeedbackCount}
-            salesCount={product.salesCount}
-            sellerName={product.sellerName}
-            pageType="productList"
-            updateCartItemCount={updateCartItemCount}
-          />
-        ))}
+        {currentCart.length === 0 ? (
+          <Text>No items added in the cart yet.</Text>
+        ) : (
+          currentCart.map((productId) => {
+            const product = products.find((p) => p.id === productId);
+            if (product) {
+              return (
+                <ProductCard
+                  key={productId}
+                  id={product.id}
+                  imageUrl={product.imageUrl}
+                  title={product.title}
+                  description={product.description}
+                  price={product.price}
+                  rating={product.rating}
+                  positiveFeedbackCount={product.positiveFeedbackCount}
+                  salesCount={product.salesCount}
+                  sellerName={product.sellerName}
+                  pageType="mycart"
+                />
+              );
+            } else {
+              return null;
+            }
+          })
+        )}
       </Flex>
     </Box>
   );
 };
 
-export default ProductlListPage;
+export default MyCartPage;

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   Spacer,
@@ -11,6 +11,8 @@ import {
   CardFooter,
   ButtonGroup,
   Button,
+  Flex,
+  Center,
 } from "@chakra-ui/react";
 import {
   useDisclosure,
@@ -23,8 +25,10 @@ import {
   ModalFooter,
 } from "@chakra-ui/react";
 import { useToast } from "@chakra-ui/react";
-import { SmallAddIcon, MinusIcon } from "@chakra-ui/icons";
+import { SmallAddIcon } from "@chakra-ui/icons";
+
 const ProductCard = ({
+  id,
   imageUrl,
   title,
   description,
@@ -33,11 +37,19 @@ const ProductCard = ({
   positiveFeedbackCount,
   salesCount,
   sellerName,
+  pageType,
+  updateCartItemCount,
 }) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isInCart, setIsInCart] = useState(false);
-
   const toast = useToast();
+
+  useEffect(() => {
+    // Check if the product is in the cart when the component mounts
+    const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
+    setIsInCart(storedCart.includes(id));
+  }, [id]);
+
   const handleBuyButtonClick = () => {
     // Show success toast
     toast({
@@ -53,7 +65,15 @@ const ProductCard = ({
   };
 
   const handleAddToCartButtonClick = () => {
-    setIsInCart(!isInCart);
+    // Toggle the isInCart state
+    setIsInCart(true);
+
+    // Add the product to localStorage cart
+    let currentCart = JSON.parse(localStorage.getItem("cart")) || [];
+    currentCart.push(id);
+    localStorage.setItem("cart", JSON.stringify(currentCart));
+
+    updateCartItemCount();
     // Show success toast
     toast({
       title: `${title} is now added to your cart.`,
@@ -62,13 +82,18 @@ const ProductCard = ({
       duration: 4000,
       isClosable: true,
     });
-
-    // Call onClose disclosure
-    onClose();
   };
 
   const handleRemoveFromCartButtonClick = () => {
-    setIsInCart(!isInCart);
+    // Toggle the isInCart state
+    setIsInCart(false);
+
+    // Remove the product from localStorage cart
+    let currentCart = JSON.parse(localStorage.getItem("cart")) || [];
+    const updatedCart = currentCart.filter((productId) => productId !== id);
+    localStorage.setItem("cart", JSON.stringify(updatedCart));
+
+    updateCartItemCount();
     // Show success toast
     toast({
       title: `${title} is removed from your cart.`,
@@ -77,17 +102,32 @@ const ProductCard = ({
       duration: 4000,
       isClosable: true,
     });
+
+    // Call onClose disclosure
+    onClose();
   };
+
   return (
     <>
       <Card width="20rem" margin="1rem">
         <CardBody>
-          <Image src={imageUrl} alt={title} borderRadius="lg" />
+          <Center>
+            <Image
+              style={{ objectFit: "cover" }}
+              maxHeight="11rem"
+              src={imageUrl}
+              alt={title}
+              borderRadius="lg"
+            />
+          </Center>
           <Stack mt="6" spacing="3">
             <Heading size="md">{title}</Heading>
-            <Text>{description}</Text>
+            <Flex>
+              <Text>{sellerName}</Text>
+              <i color="blue.600">&nbsp; | {salesCount} Pieces sold</i>
+            </Flex>
             <Text color="blue.600" fontSize="2xl">
-              ${price}
+              ₹{price}
             </Text>
           </Stack>
         </CardBody>
@@ -95,10 +135,12 @@ const ProductCard = ({
         <CardFooter>
           <ButtonGroup spacing="2">
             <Button onClick={onOpen} variant="solid" colorScheme="teal">
-              Buy now
+              Order Now
             </Button>
             <Button
-              style={{ display: isInCart ? "none" : "block" }}
+              style={{
+                display: isInCart ? "none" : "block",
+              }}
               variant="outline"
               onClick={handleAddToCartButtonClick}
               colorScheme="blue"
@@ -107,7 +149,10 @@ const ProductCard = ({
               Add to cart
             </Button>
             <Button
-              style={{ display: isInCart ? "block" : "none" }}
+              style={{
+                display:
+                  isInCart && pageType == "productList" ? "block" : "none",
+              }}
               variant="outline"
               onClick={handleRemoveFromCartButtonClick}
               colorScheme="red"
@@ -117,19 +162,34 @@ const ProductCard = ({
           </ButtonGroup>
         </CardFooter>
       </Card>
-      <Modal closeOnOverlayClick={false} isOpen={isOpen} onClose={onClose}>
+      <Modal
+        size="xl"
+        closeOnOverlayClick={false}
+        isOpen={isOpen}
+        onClose={onClose}
+      >
         <ModalOverlay />
         <ModalContent>
-          <ModalHeader>Confirm Order | {title}</ModalHeader>
+          <ModalHeader>Product Details | {title}</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
+            <Center>
+              {" "}
+              <Image
+                maxHeight="11rem"
+                src={imageUrl}
+                alt={title}
+                borderRadius="lg"
+              />
+            </Center>
             <i>{description}</i>
             <Spacer />
+            <Spacer />
             <Text>
-              Price: <b>${price}</b>{" "}
+              Price: <b>₹{price}</b>{" "}
             </Text>
             <Text>
-              Rating: <b>{rating}</b>
+              Rating: <b> {rating}</b>
             </Text>
             <Text>
               Positive Feedback Count: <b>{positiveFeedbackCount}</b>{" "}
@@ -143,7 +203,7 @@ const ProductCard = ({
           </ModalBody>
           <ModalFooter>
             <Button onClick={handleBuyButtonClick} colorScheme="green" mr={3}>
-              Buy
+              Place Order
             </Button>
             <Button onClick={onClose}>Cancel</Button>
           </ModalFooter>
